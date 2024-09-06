@@ -3,8 +3,10 @@ import pandas as pd
 from scholarly import scholarly, MaxTriesExceededException
 from docx import Document
 import bibtexparser
-import io
+from io import BytesIO
 import time
+
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 @st.cache_data
 def readdf(file):
@@ -18,6 +20,8 @@ def readdf(file):
     else:
         st.error("Unsupported file format. Please upload a .bib or .xlsx file.")
         return None
+
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 @st.cache_data
 def getPub(authorName):
@@ -43,21 +47,55 @@ def getPub(authorName):
     ]
     return pd.DataFrame(pubs)
 
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 def filByYear(data, start, end):
     data['year'] = pd.to_numeric(data['year'], errors='coerce')
     return data[(data['year'] >= start) & (data['year'] <= end)]
 
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 def saveExcel(data, filename):
-    data.to_excel(filename, index=False)
-    st.success(f"Data saved to {filename}")
+    excel_stream = BytesIO()
+
+    with pd.ExcelWriter(excel_stream, engine='openpyxl') as writer:
+        data.to_excel(writer, index=False, sheet_name='Sheet1')
+
+    excel_stream.seek(0)
+
+    st.download_button(
+        label="Download Excel File",
+        data=excel_stream,
+        file_name=filename,
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        key="download_button_excel_unique_key"
+    )
+    st.success(f"Data saved to {filename}. You can download it using the link above.")
+
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 def saveWord(data, filename):
     doc = Document()
     doc.add_heading('Publication Summary', 0)
+
     for _, row in data.iterrows():
         doc.add_paragraph(f"{row['year']}: {row['title']} ({row['journal']})")
-    doc.save(filename)
-    st.success(f"Data saved to {filename}")
+
+    doc_stream = BytesIO()
+    doc.save(doc_stream)
+    doc_stream.seek(0)
+
+    st.download_button(
+        label="Download Publication Summary",
+        data=doc_stream,
+        file_name=filename,
+        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        key="download_button_unique_key"
+    )
+
+    st.success("You can download the file using the link above.")
+
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 def main():
     st.title("Faculty Publication Summary Tool")
