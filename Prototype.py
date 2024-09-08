@@ -118,7 +118,6 @@ def main():
     df = st.sidebar.file_uploader("Upload a BibTeX or Excel file", type=["bib", "xlsx"])
 
     if df:
-        # Calling the readdf() funciton
         data = readdf(df)
         if data is not None:
             st.write("### Uploaded Data", data.head())
@@ -142,9 +141,8 @@ def main():
                     else:
                         st.warning(f"No publications found for {authorName} in the uploaded dataset")
                 else:
-                    # A spinner makes the program more convincing and refined
                     with st.spinner('Fetching publications...'):
-                        # Calling the getPub() function. Note that it is only utlized when the user wishes to search for publications universally
+                        # Note that the getPub() function is only utlized when the user wishes to search for publications universally
                         publications = getPub(authorName)
                     if not publications.empty:
                         st.session_state.publications = publications
@@ -155,15 +153,12 @@ def main():
             if 'publications' in st.session_state:
                 year1 = st.slider("Start Year", 1900, 2024, 2015)
                 year2 = st.slider("End Year", 1900, 2024, 2020)
-                 # Calling the filByYear() function
                 filtered_data = filByYear(st.session_state.publications, year1, year2)
                 st.write(f"### Filtered Publications ({year1}-{year2})", filtered_data)
 
                 if st.button("Save to Excel"):
-                    # Calling the saveExcel() function
                     saveExcel(filtered_data, 'publication_summary.xlsx')
                 if st.button("Save to Word"):
-                    # Calling the saveWord() function
                     saveWord(filtered_data, 'publication_summary.docx')
 
 # Ensures that the program functions only when the code is run directly, and not when it is imported as a module in another script; and calling main()
